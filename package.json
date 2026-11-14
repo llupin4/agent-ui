@@ -11,6 +11,7 @@
     "check:redaction": "node scripts/check-redaction.mts"
   },
   "dependencies": {
+    "@ai-sdk/openai": "3.0.143",
     "@copilotkit/react-core": "1.88.0",
     "@copilotkit/runtime": "1.88.0",
     "@copilotkit/sqlite-runner": "1.88.0",

@@ -19,6 +19,19 @@ No API key? `FIXTURE_MODE=1 npm run dev` swaps the model for a scripted, clearly
 labeled fixture model. Everything above the model (BuiltInAgent, tools, A2UI
 middleware, runner, persistence) is the real code path.
 
+To use an OpenAI-compatible endpoint, set these in `.env.local` and restart the server:
+
+```dotenv
+FIXTURE_MODE=0
+AGENT_MODEL=your-provider-model-id
+OPENAI_BASE_URL=https://your-provider.example/v1
+OPENAI_API_KEY=your-key
+```
+
+When `OPENAI_BASE_URL` is set, `AGENT_MODEL` is sent unchanged to that endpoint
+using Chat Completions. Omit `/chat/completions` from the base URL. Choose a model supporting
+streaming and tool calling so it can search activities and render A2UI surfaces.
+
 Other commands: `npm run typecheck`, `npm run lint`, `npm run build && npm start`,
 `npm run check:redaction`.
 

@@ -1,5 +1,6 @@
 import { wrapLanguageModel, type LanguageModel } from "ai";
 import { resolveModel } from "@copilotkit/runtime/v2";
+import { createOpenAI } from "@ai-sdk/openai";
 import { createFixtureModel } from "./fixture-model";
 import { providerTraceMiddleware } from "./provider-trace";
 
@@ -9,9 +10,8 @@ import { providerTraceMiddleware } from "./provider-trace";
  * Today: one "provider/model" string (AGENT_MODEL) resolved by CopilotKit's
  * own resolveModel(), which reads the provider's API key from the environment.
  *
- * To add an OpenAI-compatible / local endpoint later, build a LanguageModel
- * here (e.g. createOpenAI({ baseURL, apiKey }).chat(modelId) from
- * @ai-sdk/openai) and return it from buildBaseModel(). Nothing else changes:
+ * OPENAI_BASE_URL selects an OpenAI-compatible Chat Completions endpoint;
+ * AGENT_MODEL is then sent as the exact model ID. Nothing else changes:
  * BuiltInAgent accepts any AI SDK LanguageModel.
  */
 const DEFAULT_MODEL = "anthropic/claude-sonnet-4-6";
@@ -35,7 +35,9 @@ export interface ModelInfo {
 export function modelInfo(): ModelInfo {
   const fixture = process.env.FIXTURE_MODE === "1";
   const spec = process.env.AGENT_MODEL?.trim() || DEFAULT_MODEL;
-  const keyEnv = KEY_ENV_BY_PROVIDER[spec.split("/")[0] ?? ""];
+  const keyEnv = process.env.OPENAI_BASE_URL?.trim()
+    ? "OPENAI_API_KEY"
+    : KEY_ENV_BY_PROVIDER[spec.split("/")[0] ?? ""];
   return {
     fixture,
     label: fixture ? "fixture/scripted-weekend-planner" : spec,
@@ -47,7 +49,15 @@ export function modelInfo(): ModelInfo {
 
 function buildBaseModel(): LanguageModel {
   if (process.env.FIXTURE_MODE === "1") return createFixtureModel();
-  return resolveModel(process.env.AGENT_MODEL?.trim() || DEFAULT_MODEL);
+  const spec = process.env.AGENT_MODEL?.trim() || DEFAULT_MODEL;
+  const baseURL = process.env.OPENAI_BASE_URL?.trim();
+  if (baseURL) {
+    return createOpenAI({
+      baseURL,
+      apiKey: process.env.OPENAI_API_KEY,
+    }).chat(spec);
+  }
+  return resolveModel(spec);
 }
 
 export function createModel(): LanguageModel {
